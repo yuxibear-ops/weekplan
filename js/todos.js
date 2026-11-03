@@ -145,7 +145,10 @@
 
   App.deleteTodo = function (id) {
     App.state.todos = App.state.todos.filter(function (t) { return t.id !== id; });
+    var tc = App.state.timetable.todoCells || {};
+    for (var k in tc) { if (tc[k] === id) delete tc[k]; }
     Store.save(App.state);
     App.renderTodos();
+    App.renderTimetable();
   };
 })();

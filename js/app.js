@@ -10,7 +10,6 @@
     App.bindEvents();
     App.switchTab('timetable');
     App.renderSettings();
-    App.registerSW();
   };
 
   App.bindEvents = function () {
@@ -52,7 +51,21 @@
         App.toast('已放入课表');
         return;
       }
-      if (cell.dataset.todo) { App.toggleTodo(cell.dataset.todo); return; }
+      if (cell.dataset.todo) {
+        var todoId = cell.dataset.todo;
+        if (!App.findTodo(todoId)) {
+          var pk = App.findTodoPlacement(todoId);
+          if (pk) {
+            delete App.state.timetable.todoCells[pk];
+            Store.save(App.state);
+            App.renderTimetable();
+            App.toast('已清除失效的 ddl');
+          }
+          return;
+        }
+        App.toggleTodo(todoId);
+        return;
+      }
       App.openCourseEditor(cell.dataset.day, cell.dataset.pid);
     });
 
@@ -321,12 +334,6 @@
       App.renderNotes();
       App.toast('已清空');
     });
-  };
-
-  App.registerSW = function () {
-    if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
-      navigator.serviceWorker.register('sw.js').catch(function () {});
-    }
   };
 
   if (document.readyState === 'loading') {
