@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>WEEK♕</title>
+  <meta name="description" content="课程表 + 待办 + 便签">
+  <meta name="theme-color" content="#f28695">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="WEEK♕">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+    <header class="app-header">
+      <h1 id="view-title">WEEK♕</h1>
+      <div class="header-actions">
+        <button id="btn-add" class="icon-btn" aria-label="新建" style="display:none">＋</button>
+        <button id="btn-settings" class="icon-btn" aria-label="设置">⚙</button>
+      </div>
+    </header>
+
+    <main id="views">
+      <section id="view-timetable" class="view active"></section>
+      <section id="view-todos" class="view"></section>
+      <section id="view-notes" class="view"></section>
+    </main>
+
+    <nav class="tabbar">
+      <button class="tab active" data-tab="timetable">WEEK♕</button>
+      <button class="tab" data-tab="todos">ddl</button>
+      <button class="tab" data-tab="notes">便签</button>
+    </nav>
+  </div>
+
+  <!-- 课程编辑 -->
+  <div class="modal" id="modal-course">
+    <div class="modal-backdrop" data-close="modal-course"></div>
+    <div class="modal-sheet">
+      <h2 class="modal-title">课程</h2>
+      <div class="field"><label>课程名</label><input id="course-name" type="text" placeholder="如:高等数学"></div>
+      <div class="field"><label>地点</label><input id="course-location" type="text" placeholder="如:教一 201"></div>
+      <div class="field"><label>老师</label><input id="course-teacher" type="text" placeholder="选填"></div>
+      <div class="field"><label>颜色</label><div class="swatches" id="course-color"></div></div>
+      <div class="field"><label>连上节数</label><input id="course-span" type="number" min="1" max="12" value="1"></div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="course-save">保存</button>
+        <button class="btn btn-ghost" id="course-delete" style="display:none">删除</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 待办编辑 -->
+  <div class="modal" id="modal-todo">
+    <div class="modal-backdrop" data-close="modal-todo"></div>
+    <div class="modal-sheet">
+      <h2 class="modal-title">ddl</h2>
+      <div class="field"><label>内容</label><textarea id="todo-text" rows="2" placeholder="要做什么?"></textarea></div>
+      <div class="field"><label>日期(选填)</label><input id="todo-date" type="date"></div>
+      <div class="field"><label>优先级</label>
+        <div class="seg" id="todo-priority">
+          <button type="button" class="seg-btn active" data-p="">无</button>
+          <button type="button" class="seg-btn" data-p="high">高</button>
+          <button type="button" class="seg-btn" data-p="mid">中</button>
+          <button type="button" class="seg-btn" data-p="low">低</button>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="todo-save">保存</button>
+        <button class="btn btn-ghost" id="todo-delete" style="display:none">删除</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 便签编辑 -->
+  <div class="modal" id="modal-note">
+    <div class="modal-backdrop" data-close="modal-note"></div>
+    <div class="modal-sheet">
+      <h2 class="modal-title">便签</h2>
+      <div class="field"><label>标题</label><input id="note-title" type="text" placeholder="标题"></div>
+      <div class="field"><label>内容</label><textarea id="note-body" rows="4" placeholder="写点什么..."></textarea></div>
+      <div class="field"><label>颜色</label><div class="swatches" id="note-color"></div></div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="note-save">保存</button>
+        <button class="btn btn-ghost" id="note-delete" style="display:none">删除</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 设置 -->
+  <div class="modal" id="modal-settings">
+    <div class="modal-backdrop" data-close="modal-settings"></div>
+    <div class="modal-sheet">
+      <h2 class="modal-title">设置</h2>
+      <div class="field">
+        <label>节次时间</label>
+        <div id="periods-list"></div>
+        <button class="btn btn-ghost" id="period-add" style="width:100%">＋ 添加一节</button>
+      </div>
+      <div class="field row">
+        <label for="show-weekend">显示周六 / 周日</label>
+        <input type="checkbox" id="show-weekend" class="switch">
+      </div>
+      <div class="field">
+        <label>数据备份</label>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" id="btn-export">导出 JSON</button>
+          <label class="btn btn-ghost" for="btn-import">导入 JSON<input id="btn-import" type="file" accept=".json,application/json" hidden></label>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-danger" id="btn-clear">清空所有数据</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 确认 -->
+  <div class="modal" id="modal-confirm">
+    <div class="modal-backdrop" data-close="modal-confirm"></div>
+    <div class="modal-sheet">
+      <p id="confirm-msg" class="confirm-msg"></p>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" data-close="modal-confirm">取消</button>
+        <button class="btn btn-danger" id="confirm-ok">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+  <div id="drag-hint"></div>
+
+  <script src="js/storage.js"></script>
+  <script src="js/timetable.js"></script>
+  <script src="js/todos.js"></script>
+  <script src="js/notes.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
