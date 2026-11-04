@@ -10,6 +10,7 @@
     App.bindEvents();
     App.switchTab('timetable');
     App.renderSettings();
+    App.applyBackground();
   };
 
   App.bindEvents = function () {
@@ -196,6 +197,17 @@
       App.renderTimetable();
     });
 
+    // 设置:背景
+    document.getElementById('btn-bg').addEventListener('change', function () {
+      var file = this.files && this.files[0];
+      if (file) App.setBackgroundImage(file);
+      this.value = '';
+    });
+    document.getElementById('btn-bg-clear').addEventListener('click', App.clearBackground);
+    document.getElementById('bg-opacity').addEventListener('input', function () {
+      App.setBackgroundOpacity(parseInt(this.value, 10));
+    });
+
     // 设置:添加一节
     document.getElementById('period-add').addEventListener('click', function () {
       var ps = App.state.timetable.periods;
@@ -290,6 +302,60 @@
     });
     list.innerHTML = html;
     document.getElementById('show-weekend').checked = !!tt.showWeekend;
+    var op = Math.round((App.state.backgroundOpacity || 1) * 100);
+    document.getElementById('bg-opacity').value = op;
+    document.getElementById('bg-opacity-val').textContent = op + '%';
+  };
+
+  App.applyBackground = function () {
+    var layer = document.getElementById('bg-layer');
+    if (!layer) return;
+    var bg = App.state.background || '';
+    document.body.classList.toggle('has-bg', !!bg);
+    if (bg) {
+      layer.style.backgroundImage = 'url(' + bg + ')';
+      layer.style.opacity = (typeof App.state.backgroundOpacity === 'number') ? App.state.backgroundOpacity : 1;
+      layer.style.display = 'block';
+    } else {
+      layer.style.display = 'none';
+    }
+  };
+
+  App.setBackgroundImage = function (file) {
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      var img = new Image();
+      img.onload = function () {
+        var max = 1600;
+        var scale = Math.min(1, max / Math.max(img.width, img.height));
+        var canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        App.state.background = canvas.toDataURL('image/jpeg', 0.78);
+        Store.save(App.state);
+        App.applyBackground();
+        App.toast('背景已设置');
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  App.clearBackground = function () {
+    App.state.background = '';
+    Store.save(App.state);
+    App.applyBackground();
+    App.toast('背景已清除');
+  };
+
+  App.setBackgroundOpacity = function (val) {
+    App.state.backgroundOpacity = val / 100;
+    Store.save(App.state);
+    App.applyBackground();
+    document.getElementById('bg-opacity-val').textContent = val + '%';
   };
 
   App.exportJSON = function () {

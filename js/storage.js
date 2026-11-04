@@ -18,7 +18,9 @@
     return {
       timetable: { periods: defaultPeriods(), showWeekend: false, cells: {}, todoCells: {} },
       todos: [],
-      notes: []
+      notes: [],
+      background: '',
+      backgroundOpacity: 1
     };
   }
 
@@ -34,7 +36,9 @@
         todoCells: (tt.todoCells && typeof tt.todoCells === 'object' && !Array.isArray(tt.todoCells)) ? tt.todoCells : {}
       },
       todos: Array.isArray(obj.todos) ? obj.todos : [],
-      notes: Array.isArray(obj.notes) ? obj.notes : []
+      notes: Array.isArray(obj.notes) ? obj.notes : [],
+      background: (typeof obj.background === 'string') ? obj.background : '',
+      backgroundOpacity: (typeof obj.backgroundOpacity === 'number') ? obj.backgroundOpacity : 1
     };
   }
 

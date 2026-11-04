@@ -16,6 +16,7 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+  <div id="bg-layer"></div>
   <div id="app">
     <header class="app-header">
       <h1 id="view-title">WEEK♕</h1>
@@ -103,8 +104,20 @@
         <button class="btn btn-ghost" id="period-add" style="width:100%">＋ 添加一节</button>
       </div>
       <div class="field row">
-        <label for="show-weekend">显示周六 / 周日</label>
+        <label for="show-weekend">显示周六周日</label>
         <input type="checkbox" id="show-weekend" class="switch">
+      </div>
+      <div class="field">
+        <label>背景</label>
+        <div class="modal-actions">
+          <label class="btn btn-ghost" for="btn-bg">上传背景图<input id="btn-bg" type="file" accept="image/*" hidden></label>
+          <button class="btn btn-ghost" id="btn-bg-clear">清除背景</button>
+        </div>
+        <div class="bg-opacity-row">
+          <label for="bg-opacity">背景不透明度</label>
+          <span id="bg-opacity-val">100%</span>
+        </div>
+        <input type="range" id="bg-opacity" min="0" max="100" value="100" class="range">
       </div>
       <div class="field">
         <label>数据备份</label>
