@@ -11,6 +11,7 @@
     App.switchTab('timetable');
     App.renderSettings();
     App.applyBackground();
+    App.updateSemesterBtn();
   };
 
   App.bindEvents = function () {
@@ -240,6 +241,18 @@
       App.renderTodos();
     });
 
+    // 本周 + 学期
+    document.getElementById('btn-this-week').addEventListener('click', App.goThisWeek);
+    document.getElementById('btn-semester').addEventListener('click', function () {
+      App.renderSemesters();
+      App.openModal('modal-semester');
+    });
+    document.getElementById('semester-list').addEventListener('click', function (e) {
+      var item = e.target.closest('.semester-item');
+      if (item) App.switchSemester(item.dataset.id);
+    });
+    document.getElementById('new-sem-add').addEventListener('click', App.createSemester);
+
     // 设置:添加一节
     document.getElementById('period-add').addEventListener('click', function () {
       var ps = App.state.timetable.periods;
@@ -316,6 +329,7 @@
     var titles = { timetable: (App.state.appName || 'WEEK♕'), todos: 'ddl', notes: '便签' };
     document.getElementById('view-title').textContent = titles[tab];
     document.getElementById('btn-add').style.display = (tab === 'timetable') ? 'none' : 'flex';
+    document.getElementById('btn-this-week').style.display = (tab === 'timetable') ? 'flex' : 'none';
     if (tab === 'timetable') App.renderTimetable();
     if (tab === 'todos') App.renderTodos();
     if (tab === 'notes') App.renderNotes();
@@ -392,6 +406,71 @@
     Store.save(App.state);
     App.applyBackground();
     document.getElementById('bg-opacity-val').textContent = val + '%';
+  };
+
+  App.goThisWeek = function () {
+    var start = new Date((App.state.semesterStart || '2026-09-07') + 'T00:00:00');
+    var today = new Date(App.today() + 'T00:00:00');
+    var diff = Math.floor((today.getTime() - start.getTime()) / 86400000);
+    var week = Math.max(1, Math.floor(diff / 7) + 1);
+    App.state.currentWeek = week;
+    Store.save(App.state);
+    App.renderTimetable();
+    App.toast('已回到本周(第 ' + week + ' 周)');
+  };
+
+  App.updateSemesterBtn = function () {
+    var sem = App.state.semesters[App.state.currentSemesterId];
+    document.getElementById('btn-semester').textContent = sem ? sem.name : '2026-2027-1';
+  };
+
+  App.switchSemester = function (id) {
+    if (id === App.state.currentSemesterId) { App.closeModal('modal-semester'); return; }
+    Store.save(App.state);
+    App.state.currentSemesterId = id;
+    var sem = App.state.semesters[id];
+    App.state.timetable = sem.timetable;
+    App.state.todos = sem.todos;
+    App.state.notes = sem.notes;
+    App.state.semesterStart = sem.semesterStart;
+    App.state.currentWeek = 1;
+    Store.save(App.state);
+    App.renderSettings();
+    App.renderTimetable();
+    App.renderTodos();
+    App.renderNotes();
+    App.updateSemesterBtn();
+    App.closeModal('modal-semester');
+    App.toast('已切换到 ' + sem.name);
+  };
+
+  App.createSemester = function () {
+    var name = document.getElementById('new-sem-name').value.trim();
+    if (!name) { App.toast('请输入学期名称'); return; }
+    var start = document.getElementById('new-sem-start').value || '2026-09-07';
+    App.state.semesters[name] = {
+      id: name, name: name, semesterStart: start,
+      timetable: { periods: Store.defaultPeriods(), showWeekend: false, cells: {}, todoCells: {} },
+      todos: [], notes: []
+    };
+    Store.save(App.state);
+    App.renderSemesters();
+    document.getElementById('new-sem-name').value = '';
+    App.toast('已创建学期 ' + name + ',点它切换');
+  };
+
+  App.renderSemesters = function () {
+    var box = document.getElementById('semester-list');
+    var html = '';
+    for (var k in App.state.semesters) {
+      var sm = App.state.semesters[k];
+      var cur = (k === App.state.currentSemesterId);
+      html += '<div class="semester-item' + (cur ? ' current' : '') + '" data-id="' + App.esc(k) + '">'
+        + '<span class="semester-name">' + App.esc(sm.name) + (cur ? ' (当前)' : '') + '</span>'
+        + '<span class="semester-start">' + App.esc(sm.semesterStart) + ' 起</span>'
+        + '</div>';
+    }
+    box.innerHTML = html;
   };
 
   App.exportJSON = function () {

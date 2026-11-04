@@ -14,39 +14,90 @@
     });
   }
 
-  function defaultState() {
+  function defaultSemester() {
     return {
+      id: '2026-2027-1',
+      name: '2026-2027-1',
+      semesterStart: '2026-09-07',
       timetable: { periods: defaultPeriods(), showWeekend: false, cells: {}, todoCells: {} },
       todos: [],
-      notes: [],
+      notes: []
+    };
+  }
+
+  function normalizeTimetable(tt) {
+    var d = defaultSemester().timetable;
+    tt = tt || {};
+    return {
+      periods: (Array.isArray(tt.periods) && tt.periods.length) ? tt.periods : d.periods,
+      showWeekend: !!tt.showWeekend,
+      cells: (tt.cells && typeof tt.cells === 'object' && !Array.isArray(tt.cells)) ? tt.cells : {},
+      todoCells: (tt.todoCells && typeof tt.todoCells === 'object' && !Array.isArray(tt.todoCells)) ? tt.todoCells : {}
+    };
+  }
+
+  function defaultState() {
+    var sem = defaultSemester();
+    var state = {
+      semesters: {},
+      currentSemesterId: sem.id,
+      timetable: sem.timetable,
+      todos: sem.todos,
+      notes: sem.notes,
+      semesterStart: sem.semesterStart,
       background: '',
       backgroundOpacity: 1,
       currentWeek: 1,
       appName: 'WEEK♕',
-      semesterStart: '2026-09-07',
       placeEmoji: '⏱',
       unplaceEmoji: '↩'
     };
+    state.semesters[sem.id] = sem;
+    return state;
   }
 
   function normalize(obj) {
-    var d = defaultState();
     obj = obj || {};
-    var tt = obj.timetable || {};
+    var currentId = (typeof obj.currentSemesterId === 'string' && obj.currentSemesterId) ? obj.currentSemesterId : '2026-2027-1';
+    var semesters = (obj.semesters && typeof obj.semesters === 'object' && !Array.isArray(obj.semesters)) ? obj.semesters : null;
+
+    if (!semesters) {
+      semesters = {};
+      semesters[currentId] = {
+        id: currentId,
+        name: currentId,
+        semesterStart: (typeof obj.semesterStart === 'string' && obj.semesterStart) ? obj.semesterStart : '2026-09-07',
+        timetable: normalizeTimetable(obj.timetable),
+        todos: Array.isArray(obj.todos) ? obj.todos : [],
+        notes: Array.isArray(obj.notes) ? obj.notes : []
+      };
+    } else {
+      for (var k in semesters) {
+        var sm = semesters[k];
+        sm.id = sm.id || k;
+        sm.name = (typeof sm.name === 'string' && sm.name) ? sm.name : k;
+        sm.semesterStart = (typeof sm.semesterStart === 'string' && sm.semesterStart) ? sm.semesterStart : '2026-09-07';
+        sm.timetable = normalizeTimetable(sm.timetable);
+        sm.todos = Array.isArray(sm.todos) ? sm.todos : [];
+        sm.notes = Array.isArray(sm.notes) ? sm.notes : [];
+      }
+    }
+    if (!semesters[currentId]) {
+      semesters[currentId] = defaultSemester();
+    }
+    var sem = semesters[currentId];
+
     return {
-      timetable: {
-        periods: (Array.isArray(tt.periods) && tt.periods.length) ? tt.periods : d.timetable.periods,
-        showWeekend: !!tt.showWeekend,
-        cells: (tt.cells && typeof tt.cells === 'object' && !Array.isArray(tt.cells)) ? tt.cells : {},
-        todoCells: (tt.todoCells && typeof tt.todoCells === 'object' && !Array.isArray(tt.todoCells)) ? tt.todoCells : {}
-      },
-      todos: Array.isArray(obj.todos) ? obj.todos : [],
-      notes: Array.isArray(obj.notes) ? obj.notes : [],
+      semesters: semesters,
+      currentSemesterId: currentId,
+      timetable: sem.timetable,
+      todos: sem.todos,
+      notes: sem.notes,
+      semesterStart: sem.semesterStart,
       background: (typeof obj.background === 'string') ? obj.background : '',
       backgroundOpacity: (typeof obj.backgroundOpacity === 'number') ? obj.backgroundOpacity : 1,
       currentWeek: (typeof obj.currentWeek === 'number' && obj.currentWeek >= 1) ? obj.currentWeek : 1,
       appName: (typeof obj.appName === 'string' && obj.appName) ? obj.appName : 'WEEK♕',
-      semesterStart: (typeof obj.semesterStart === 'string' && obj.semesterStart) ? obj.semesterStart : '2026-09-07',
       placeEmoji: (typeof obj.placeEmoji === 'string' && obj.placeEmoji) ? obj.placeEmoji : '⏱',
       unplaceEmoji: (typeof obj.unplaceEmoji === 'string' && obj.unplaceEmoji) ? obj.unplaceEmoji : '↩'
     };
@@ -69,6 +120,13 @@
       }
     },
     save: function (state) {
+      var sem = state.semesters && state.semesters[state.currentSemesterId];
+      if (sem) {
+        sem.timetable = state.timetable;
+        sem.todos = state.todos;
+        sem.notes = state.notes;
+        sem.semesterStart = state.semesterStart;
+      }
       try { window.localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
     },
     exportJSON: function (state) {

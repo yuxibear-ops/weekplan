@@ -19,9 +19,11 @@
   <div id="bg-layer"></div>
   <div id="app">
     <header class="app-header">
+      <button id="btn-this-week" class="pill-btn left-btn" style="display:none">本周</button>
       <h1 id="view-title">WEEK♕</h1>
       <div class="header-actions">
         <button id="btn-add" class="icon-btn" aria-label="新建" style="display:none">＋</button>
+        <button id="btn-semester" class="pill-btn">2026-2027-1</button>
         <button id="btn-settings" class="icon-btn" aria-label="设置">⚙</button>
       </div>
     </header>
@@ -140,6 +142,22 @@
       </div>
       <div class="modal-actions">
         <button class="btn btn-danger" id="btn-clear">清空所有数据</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 学期管理 -->
+  <div class="modal" id="modal-semester">
+    <div class="modal-backdrop" data-close="modal-semester"></div>
+    <div class="modal-sheet">
+      <h2 class="modal-title">学期</h2>
+      <div id="semester-list"></div>
+      <div class="field">
+        <div class="mini-label">新建学期名称</div>
+        <input id="new-sem-name" type="text" placeholder="如:2026-2027-2">
+        <div class="mini-label">第1周周一日期</div>
+        <input id="new-sem-start" type="date">
+        <button class="btn btn-primary" id="new-sem-add" style="width:100%;margin-top:10px">＋ 新建学期</button>
       </div>
     </div>
   </div>
