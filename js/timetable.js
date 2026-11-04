@@ -63,7 +63,12 @@
     var days = visibleDays();
     var cover = buildCover(tt);
 
-    var html = '<div class="tt-scroll"><div class="tt-grid" style="--cols:' + days.length + '">';
+    var html = '<div class="week-nav">'
+      + '<button class="week-btn" data-week="-1">◀</button>'
+      + '<span class="week-label">第 ' + (App.state.currentWeek || 1) + ' 周</span>'
+      + '<button class="week-btn" data-week="1">▶</button>'
+      + '</div>';
+    html += '<div class="tt-scroll"><div class="tt-grid" style="--cols:' + days.length + '">';
 
     // 表头
     html += '<div class="tt-corner" style="grid-column:1;grid-row:1"></div>';

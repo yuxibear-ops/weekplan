@@ -35,6 +35,14 @@
     // 课程表点击(委托)
     document.getElementById('view-timetable').addEventListener('click', function (e) {
       if (App._suppressClick) { App._suppressClick = false; return; }
+      var wb = e.target.closest('.week-btn');
+      if (wb) {
+        var d = parseInt(wb.dataset.week, 10);
+        App.state.currentWeek = Math.max(1, Math.min(30, (App.state.currentWeek || 1) + d));
+        Store.save(App.state);
+        App.renderTimetable();
+        return;
+      }
       var cell = e.target.closest('.cell');
       if (!cell) return;
       if (App._placingTodoId) {

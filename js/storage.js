@@ -20,7 +20,8 @@
       todos: [],
       notes: [],
       background: '',
-      backgroundOpacity: 1
+      backgroundOpacity: 1,
+      currentWeek: 1
     };
   }
 
@@ -38,7 +39,8 @@
       todos: Array.isArray(obj.todos) ? obj.todos : [],
       notes: Array.isArray(obj.notes) ? obj.notes : [],
       background: (typeof obj.background === 'string') ? obj.background : '',
-      backgroundOpacity: (typeof obj.backgroundOpacity === 'number') ? obj.backgroundOpacity : 1
+      backgroundOpacity: (typeof obj.backgroundOpacity === 'number') ? obj.backgroundOpacity : 1,
+      currentWeek: (typeof obj.currentWeek === 'number' && obj.currentWeek >= 1) ? obj.currentWeek : 1
     };
   }
 
