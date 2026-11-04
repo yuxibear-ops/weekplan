@@ -70,10 +70,21 @@
       + '</div>';
     html += '<div class="tt-scroll"><div class="tt-grid" style="--cols:' + days.length + '">';
 
-    // 表头
+    // 表头(带日期)
+    var dates = App.weekDates();
+    var todayStr = App.today();
     html += '<div class="tt-corner" style="grid-column:1;grid-row:1"></div>';
     days.forEach(function (d, di) {
-      html += '<div class="tt-day" style="grid-column:' + (di + 2) + ';grid-row:1">' + App.esc(d) + '</div>';
+      var idx = App.DAYS.indexOf(d);
+      var date = dates[idx];
+      var ds = App.dateStr(date);
+      var isToday = (ds === todayStr);
+      var dayDdls = App.state.todos.filter(function (t) { return t.date === ds && !t.done; });
+      html += '<div class="tt-day' + (isToday ? ' today' : '') + '" style="grid-column:' + (di + 2) + ';grid-row:1">'
+        + '<span class="tt-dayname">' + App.esc(d) + '</span>'
+        + '<span class="tt-date">' + App.fmtShortDate(date) + '</span>'
+        + (dayDdls.length ? '<div class="tt-day-ddls">' + dayDdls.map(function (t) { return '<span class="tt-ddl-chip">' + App.esc(t.text) + '</span>'; }).join('') + '</div>' : '')
+        + '</div>';
     });
 
     tt.periods.forEach(function (p, pi) {
@@ -86,7 +97,7 @@
         var cell = tt.cells[key];
         if (cell) {
           var span = Math.max(1, cell.span || 1);
-          html += '<button class="cell filled" style="background:' + App.esc(cell.color || App.PALETTE[0]) + ';grid-column:' + col + ';grid-row:' + row + ' / span ' + span + '" data-day="' + App.esc(d) + '" data-pid="' + App.esc(p.id) + '">'
+          html += '<button class="cell filled" style="background:' + App.hexToRgba(cell.color || App.PALETTE[0], 0.55) + ';grid-column:' + col + ';grid-row:' + row + ' / span ' + span + '" data-day="' + App.esc(d) + '" data-pid="' + App.esc(p.id) + '">'
             + '<span class="cname">' + App.esc(cell.name) + '</span>'
             + (cell.location ? '<span class="cloc">' + App.esc(cell.location) + '</span>' : '')
             + '<span class="drag-handle"></span>'

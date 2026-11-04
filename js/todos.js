@@ -57,8 +57,8 @@
           +   '</div>'
           + '</div>'
           + (placedKey
-              ? '<button class="todo-place" data-act="unplace" title="移出课表">↩</button>'
-              : '<button class="todo-place" data-act="place" title="放入课表">⏱</button>')
+              ? '<button class="todo-place" data-act="unplace" title="移出课表">' + App.esc(App.state.unplaceEmoji || '↩') + '</button>'
+              : '<button class="todo-place" data-act="place" title="放入课表">' + App.esc(App.state.placeEmoji || '⏱') + '</button>')
           + '<button class="todo-del" data-act="del">✕</button>'
           + '</div>';
       });

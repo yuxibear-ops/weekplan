@@ -21,7 +21,11 @@
       notes: [],
       background: '',
       backgroundOpacity: 1,
-      currentWeek: 1
+      currentWeek: 1,
+      appName: 'WEEK♕',
+      semesterStart: '2026-09-07',
+      placeEmoji: '⏱',
+      unplaceEmoji: '↩'
     };
   }
 
@@ -40,7 +44,11 @@
       notes: Array.isArray(obj.notes) ? obj.notes : [],
       background: (typeof obj.background === 'string') ? obj.background : '',
       backgroundOpacity: (typeof obj.backgroundOpacity === 'number') ? obj.backgroundOpacity : 1,
-      currentWeek: (typeof obj.currentWeek === 'number' && obj.currentWeek >= 1) ? obj.currentWeek : 1
+      currentWeek: (typeof obj.currentWeek === 'number' && obj.currentWeek >= 1) ? obj.currentWeek : 1,
+      appName: (typeof obj.appName === 'string' && obj.appName) ? obj.appName : 'WEEK♕',
+      semesterStart: (typeof obj.semesterStart === 'string' && obj.semesterStart) ? obj.semesterStart : '2026-09-07',
+      placeEmoji: (typeof obj.placeEmoji === 'string' && obj.placeEmoji) ? obj.placeEmoji : '⏱',
+      unplaceEmoji: (typeof obj.unplaceEmoji === 'string' && obj.unplaceEmoji) ? obj.unplaceEmoji : '↩'
     };
   }
 
@@ -96,6 +104,37 @@
       var m = ('0' + (d.getMonth() + 1)).slice(-2);
       var day = ('0' + d.getDate()).slice(-2);
       return d.getFullYear() + '-' + m + '-' + day;
+    },
+
+    hexToRgba: function (hex, alpha) {
+      var h = String(hex || '#f28695').replace('#', '');
+      if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+      var r = parseInt(h.substring(0, 2), 16);
+      var g = parseInt(h.substring(2, 4), 16);
+      var b = parseInt(h.substring(4, 6), 16);
+      return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
+    },
+
+    dateStr: function (d) {
+      var m = ('0' + (d.getMonth() + 1)).slice(-2);
+      var day = ('0' + d.getDate()).slice(-2);
+      return d.getFullYear() + '-' + m + '-' + day;
+    },
+
+    weekDates: function () {
+      var startStr = App.state.semesterStart || '2026-09-07';
+      var start = new Date(startStr + 'T00:00:00');
+      var week = App.state.currentWeek || 1;
+      var monday = new Date(start.getTime() + (week - 1) * 7 * 86400000);
+      var days = [];
+      for (var i = 0; i < 7; i++) {
+        days.push(new Date(monday.getTime() + i * 86400000));
+      }
+      return days;
+    },
+
+    fmtShortDate: function (d) {
+      return (d.getMonth() + 1) + '/' + d.getDate();
     },
 
     fmtDate: function (s) {

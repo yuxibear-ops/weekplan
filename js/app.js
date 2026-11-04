@@ -216,6 +216,30 @@
       App.setBackgroundOpacity(parseInt(this.value, 10));
     });
 
+    // 设置:自定义
+    document.getElementById('app-name').addEventListener('input', function () {
+      App.state.appName = this.value;
+      Store.save(App.state);
+      if (App.currentTab === 'timetable') {
+        document.getElementById('view-title').textContent = this.value || 'WEEK♕';
+      }
+    });
+    document.getElementById('semester-start').addEventListener('change', function () {
+      App.state.semesterStart = this.value;
+      Store.save(App.state);
+      App.renderTimetable();
+    });
+    document.getElementById('place-emoji').addEventListener('input', function () {
+      App.state.placeEmoji = this.value;
+      Store.save(App.state);
+      App.renderTodos();
+    });
+    document.getElementById('unplace-emoji').addEventListener('input', function () {
+      App.state.unplaceEmoji = this.value;
+      Store.save(App.state);
+      App.renderTodos();
+    });
+
     // 设置:添加一节
     document.getElementById('period-add').addEventListener('click', function () {
       var ps = App.state.timetable.periods;
@@ -289,7 +313,7 @@
     for (var i = 0; i < tabs.length; i++) tabs[i].classList.toggle('active', tabs[i].dataset.tab === tab);
     var views = document.querySelectorAll('.view');
     for (var j = 0; j < views.length; j++) views[j].classList.toggle('active', views[j].id === 'view-' + tab);
-    var titles = { timetable: 'WEEK♕', todos: 'ddl', notes: '便签' };
+    var titles = { timetable: (App.state.appName || 'WEEK♕'), todos: 'ddl', notes: '便签' };
     document.getElementById('view-title').textContent = titles[tab];
     document.getElementById('btn-add').style.display = (tab === 'timetable') ? 'none' : 'flex';
     if (tab === 'timetable') App.renderTimetable();
@@ -313,6 +337,10 @@
     var op = Math.round((App.state.backgroundOpacity || 1) * 100);
     document.getElementById('bg-opacity').value = op;
     document.getElementById('bg-opacity-val').textContent = op + '%';
+    document.getElementById('app-name').value = App.state.appName || 'WEEK♕';
+    document.getElementById('semester-start').value = App.state.semesterStart || '2026-09-07';
+    document.getElementById('place-emoji').value = App.state.placeEmoji || '⏱';
+    document.getElementById('unplace-emoji').value = App.state.unplaceEmoji || '↩';
   };
 
   App.applyBackground = function () {

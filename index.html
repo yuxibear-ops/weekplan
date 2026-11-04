@@ -120,6 +120,18 @@
         <input type="range" id="bg-opacity" min="0" max="100" value="100" class="range">
       </div>
       <div class="field">
+        <label>自定义</label>
+        <div class="mini-label">应用名称</div>
+        <input id="app-name" type="text" placeholder="WEEK♕">
+        <div class="mini-label">学期起始(第1周周一)</div>
+        <input id="semester-start" type="date">
+        <div class="mini-label">放入课表 / 移出课表 图标</div>
+        <div class="emoji-row">
+          <input id="place-emoji" type="text" maxlength="2" placeholder="⏱">
+          <input id="unplace-emoji" type="text" maxlength="2" placeholder="↩">
+        </div>
+      </div>
+      <div class="field">
         <label>数据备份</label>
         <div class="modal-actions">
           <button class="btn btn-ghost" id="btn-export">导出 JSON</button>
