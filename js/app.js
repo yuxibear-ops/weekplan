@@ -15,6 +15,7 @@
     App.applyBackground();
     App.applyCellOpacity();
     App.updateSemesterBtn();
+    App.updateUndoBtn();
   };
 
   App.bindEvents = function () {
@@ -60,17 +61,25 @@
         var srcKey = App.cellKey(mc.day, mc.pid);
         var course = App.state.timetable.cells[srcKey];
         if (!course) { App._movingCourse = null; App.renderTimetable(); return; }
-        App.state.timetable.cells[mvKey] = course;
-        delete App.state.timetable.cells[srcKey];
         var mIdx = -1;
         App.state.timetable.periods.forEach(function (pp, i) { if (pp.id === mvPid) mIdx = i; });
         for (var m2 = 1; m2 < (course.span || 1); m2++) {
           var npp = App.state.timetable.periods[mIdx + m2];
-          if (npp) delete App.state.timetable.cells[App.cellKey(mvDay, npp.id)];
+          if (npp && App.state.timetable.cells[App.cellKey(mvDay, npp.id)]) {
+            App.toast('目标位置放不下(会覆盖别的课)'); return;
+          }
+        }
+        App._lastCells = JSON.parse(JSON.stringify(App.state.timetable.cells));
+        App.state.timetable.cells[mvKey] = course;
+        delete App.state.timetable.cells[srcKey];
+        for (var m3 = 1; m3 < (course.span || 1); m3++) {
+          var npp3 = App.state.timetable.periods[mIdx + m3];
+          if (npp3) delete App.state.timetable.cells[App.cellKey(mvDay, npp3.id)];
         }
         App._movingCourse = null;
         Store.save(App.state);
         App.renderTimetable();
+        App.updateUndoBtn();
         App.toast('已移动');
         return;
       }
@@ -95,6 +104,27 @@
       if (cell.dataset.todo) {
         App.toggleTodo(cell.dataset.todo);
         return;
+      }
+      if (cell.dataset.day && cell.dataset.pid) {
+        var cKey = App.cellKey(cell.dataset.day, cell.dataset.pid);
+        if (App.state.timetable.cells[cKey]) {
+          var now = Date.now();
+          if (App._lastTap && App._lastTap.key === cKey && (now - App._lastTap.time) < 320) {
+            clearTimeout(App._lastTap.timer);
+            App._lastTap = null;
+            App._movingCourse = { day: cell.dataset.day, pid: cell.dataset.pid };
+            App.renderTimetable();
+            App.toast('已选中,点一个空格子移动');
+            return;
+          }
+          if (App._lastTap) clearTimeout(App._lastTap.timer);
+          var tmr = setTimeout(function () {
+            App._lastTap = null;
+            App.openCourseEditor(cell.dataset.day, cell.dataset.pid);
+          }, 320);
+          App._lastTap = { key: cKey, time: now, timer: tmr };
+          return;
+        }
       }
       App.openCourseEditor(cell.dataset.day, cell.dataset.pid);
     });
@@ -149,27 +179,7 @@
       window.addEventListener('pointercancel', onUp);
     });
 
-    // 长按课程块进入移动模式
-    var lpTimer = null, lpBlock = null;
-    document.getElementById('view-timetable').addEventListener('pointerdown', function (e) {
-      if (e.target.closest('.drag-handle')) return;
-      var block = e.target.closest('.cell.filled');
-      if (!block) return;
-      lpBlock = block;
-      lpTimer = setTimeout(function () {
-        lpTimer = null;
-        App._movingCourse = { day: block.dataset.day, pid: block.dataset.pid };
-        block.classList.add('moving');
-        App.toast('点一个空格子,把课程移过去');
-      }, 550);
-    });
-    function cancelLongPress() {
-      if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; }
-      if (lpBlock) { lpBlock.classList.remove('moving'); lpBlock = null; }
-    }
-    document.getElementById('view-timetable').addEventListener('pointerup', cancelLongPress);
-    document.getElementById('view-timetable').addEventListener('pointermove', cancelLongPress);
-    document.getElementById('view-timetable').addEventListener('pointerleave', cancelLongPress);
+    // (移动方式已改为双击选中)
 
     // 待办(委托)
     document.getElementById('view-todos').addEventListener('click', function (e) {
@@ -289,6 +299,7 @@
 
     // 本周 + 学期
     document.getElementById('btn-this-week').addEventListener('click', App.goThisWeek);
+    document.getElementById('btn-undo').addEventListener('click', App.undoMove);
     document.getElementById('btn-semester').addEventListener('click', function () {
       App.renderSemesters();
       App.openModal('modal-semester');
@@ -376,6 +387,7 @@
     document.getElementById('view-title').textContent = titles[tab];
     document.getElementById('btn-add').style.display = (tab === 'timetable') ? 'none' : 'flex';
     document.getElementById('btn-this-week').style.display = (tab === 'timetable') ? 'flex' : 'none';
+    document.getElementById('btn-undo').style.display = (tab === 'timetable') ? 'flex' : 'none';
     if (tab === 'timetable') App.renderTimetable();
     if (tab === 'todos') App.renderTodos();
     if (tab === 'notes') App.renderNotes();
@@ -518,6 +530,21 @@
     App.renderSemesters();
     document.getElementById('new-sem-name').value = '';
     App.toast('已创建学期 ' + name + ',点它切换');
+  };
+
+  App.undoMove = function () {
+    if (!App._lastCells) { App.toast('没有可撤回的操作'); return; }
+    App.state.timetable.cells = App._lastCells;
+    App._lastCells = null;
+    Store.save(App.state);
+    App.renderTimetable();
+    App.updateUndoBtn();
+    App.toast('已撤回');
+  };
+
+  App.updateUndoBtn = function () {
+    var btn = document.getElementById('btn-undo');
+    if (btn) btn.style.opacity = App._lastCells ? '1' : '0.4';
   };
 
   App.renderSemesters = function () {

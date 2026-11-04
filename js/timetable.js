@@ -100,7 +100,8 @@
         var showPlacement = placement && (typeof placement === 'string' ? true : (!placement.date || placement.date === dayDate));
         if (cell) {
           var span = Math.max(1, cell.span || 1);
-          html += '<button class="cell filled" style="background:' + App.hexToRgba(cell.color || App.PALETTE[0], (typeof App.state.cellOpacity === 'number' ? App.state.cellOpacity : 0.55)) + ';grid-column:' + col + ';grid-row:' + row + ' / span ' + span + '" data-day="' + App.esc(d) + '" data-pid="' + App.esc(p.id) + '">'
+          var isMoving = App._movingCourse && App._movingCourse.day === d && App._movingCourse.pid === p.id;
+          html += '<button class="cell filled' + (isMoving ? ' moving' : '') + '" style="background:' + App.hexToRgba(cell.color || App.PALETTE[0], (typeof App.state.cellOpacity === 'number' ? App.state.cellOpacity : 0.55)) + ';grid-column:' + col + ';grid-row:' + row + ' / span ' + span + '" data-day="' + App.esc(d) + '" data-pid="' + App.esc(p.id) + '">'
             + '<span class="cname">' + App.esc(cell.name) + '</span>'
             + (cell.location ? '<span class="cloc">' + App.esc(cell.location) + '</span>' : '')
             + '<span class="drag-handle"></span>'
