@@ -60,6 +60,7 @@
   };
 
   App.saveNote = function () {
+    App.captureUndo();
     var title = document.getElementById('note-title').value.trim();
     var body = document.getElementById('note-body').value.trim();
     if (!title && !body) { App.toast('内容不能为空'); return; }
@@ -81,12 +82,14 @@
   };
 
   App.deleteNote = function (id) {
+    App.captureUndo();
     App.state.notes = App.state.notes.filter(function (n) { return n.id !== id; });
     Store.save(App.state);
     App.renderNotes();
   };
 
   App.togglePin = function (id) {
+    App.captureUndo();
     App.state.notes.forEach(function (n) { if (n.id === id) n.pinned = !n.pinned; });
     Store.save(App.state);
     App.renderNotes();

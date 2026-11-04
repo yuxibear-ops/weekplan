@@ -148,6 +148,7 @@
   };
 
   App.saveCourse = function () {
+    App.captureUndo();
     var tt = App.state.timetable;
     var day = App._courseDay, pid = App._coursePid;
     var key = App.cellKey(day, pid);
@@ -181,6 +182,7 @@
   };
 
   App.deleteCourse = function () {
+    App.captureUndo();
     var tt = App.state.timetable;
     delete tt.cells[App.cellKey(App._courseDay, App._coursePid)];
     Store.save(App.state);

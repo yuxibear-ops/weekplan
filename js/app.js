@@ -69,7 +69,7 @@
             App.toast('目标位置放不下(会覆盖别的课)'); return;
           }
         }
-        App._lastCells = JSON.parse(JSON.stringify(App.state.timetable.cells));
+        App.captureUndo();
         App.state.timetable.cells[mvKey] = course;
         delete App.state.timetable.cells[srcKey];
         for (var m3 = 1; m3 < (course.span || 1); m3++) {
@@ -89,6 +89,7 @@
         if (!day || App.isCourseCell(day, pid) || (App.state.timetable.todoCells && App.state.timetable.todoCells[k])) {
           App.toast('这里已经有东西了'); return;
         }
+        App.captureUndo();
         App.state.timetable.todoCells = App.state.timetable.todoCells || {};
         var pt = App.findTodo(App._placingTodoId);
         var _dates = App.weekDates();
@@ -299,7 +300,7 @@
 
     // 本周 + 学期
     document.getElementById('btn-this-week').addEventListener('click', App.goThisWeek);
-    document.getElementById('btn-undo').addEventListener('click', App.undoMove);
+    document.getElementById('btn-undo').addEventListener('click', App.undo);
     document.getElementById('btn-semester').addEventListener('click', function () {
       App.renderSemesters();
       App.openModal('modal-semester');
@@ -387,7 +388,6 @@
     document.getElementById('view-title').textContent = titles[tab];
     document.getElementById('btn-add').style.display = (tab === 'timetable') ? 'none' : 'flex';
     document.getElementById('btn-this-week').style.display = (tab === 'timetable') ? 'flex' : 'none';
-    document.getElementById('btn-undo').style.display = (tab === 'timetable') ? 'flex' : 'none';
     if (tab === 'timetable') App.renderTimetable();
     if (tab === 'todos') App.renderTodos();
     if (tab === 'notes') App.renderNotes();
@@ -532,19 +532,32 @@
     App.toast('已创建学期 ' + name + ',点它切换');
   };
 
-  App.undoMove = function () {
-    if (!App._lastCells) { App.toast('没有可撤回的操作'); return; }
-    App.state.timetable.cells = App._lastCells;
-    App._lastCells = null;
+  App.captureUndo = function () {
+    App._undoSnapshot = {
+      cells: JSON.parse(JSON.stringify(App.state.timetable.cells)),
+      todos: JSON.parse(JSON.stringify(App.state.todos)),
+      notes: JSON.parse(JSON.stringify(App.state.notes))
+    };
+    App.updateUndoBtn();
+  };
+
+  App.undo = function () {
+    if (!App._undoSnapshot) { App.toast('没有可撤回的操作'); return; }
+    App.state.timetable.cells = App._undoSnapshot.cells;
+    App.state.todos = App._undoSnapshot.todos;
+    App.state.notes = App._undoSnapshot.notes;
+    App._undoSnapshot = null;
     Store.save(App.state);
     App.renderTimetable();
+    App.renderTodos();
+    App.renderNotes();
     App.updateUndoBtn();
     App.toast('已撤回');
   };
 
   App.updateUndoBtn = function () {
     var btn = document.getElementById('btn-undo');
-    if (btn) btn.style.opacity = App._lastCells ? '1' : '0.4';
+    if (btn) btn.style.opacity = App._undoSnapshot ? '1' : '0.4';
   };
 
   App.renderSemesters = function () {

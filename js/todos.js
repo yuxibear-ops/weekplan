@@ -89,6 +89,7 @@
   };
 
   App.unplaceTodo = function (id) {
+    App.captureUndo();
     var pk = App.findTodoPlacement(id);
     if (pk) delete App.state.timetable.todoCells[pk];
     Store.save(App.state);
@@ -120,6 +121,7 @@
   };
 
   App.saveTodo = function () {
+    App.captureUndo();
     var text = document.getElementById('todo-text').value.trim();
     if (!text) { App.toast('内容不能为空'); return; }
     var date = document.getElementById('todo-date').value;
@@ -141,6 +143,7 @@
   };
 
   App.toggleTodo = function (id) {
+    App.captureUndo();
     var t = App.findTodo(id);
     if (t) {
       t.done = !t.done;
@@ -159,6 +162,7 @@
   };
 
   App.deleteTodo = function (id) {
+    App.captureUndo();
     App.state.todos = App.state.todos.filter(function (t) { return t.id !== id; });
     var pk = App.findTodoPlacement(id);
     if (pk) delete App.state.timetable.todoCells[pk];
