@@ -43,6 +43,16 @@
     return false;
   };
 
+  App.cellHasActiveDdl = function (day, periodId) {
+    var tc = App.state.timetable.todoCells || {};
+    var p = tc[App.cellKey(day, periodId)];
+    if (!p) return false;
+    if (typeof p === 'string') return true;
+    if (!p.date) return true;
+    var dd = App.dateStr(App.weekDates()[App.DAYS.indexOf(day)]);
+    return p.date === dd;
+  };
+
   App.maxSpanFor = function (day, periodId) {
     var tt = App.state.timetable;
     var idx = -1;
@@ -50,8 +60,7 @@
     if (idx < 0) return 1;
     var max = 1;
     for (var k = idx + 1; k < tt.periods.length; k++) {
-      var key = App.cellKey(day, tt.periods[k].id);
-      if (tt.cells[key] || (tt.todoCells && tt.todoCells[key])) break;
+      if (tt.cells[App.cellKey(day, tt.periods[k].id)] || App.cellHasActiveDdl(day, tt.periods[k].id)) break;
       max++;
     }
     return max;

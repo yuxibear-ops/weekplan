@@ -55,7 +55,7 @@
         var mvDay = cell.dataset.day, mvPid = cell.dataset.pid;
         if (!mvDay || !mvPid) { App._movingCourse = null; App.renderTimetable(); return; }
         var mvKey = App.cellKey(mvDay, mvPid);
-        if (App.state.timetable.cells[mvKey] || (App.state.timetable.todoCells && App.state.timetable.todoCells[mvKey])) {
+        if (App.state.timetable.cells[mvKey] || App.cellHasActiveDdl(mvDay, mvPid)) {
           App.toast('这里不是空的'); return;
         }
         var srcKey = App.cellKey(mc.day, mc.pid);
@@ -65,7 +65,7 @@
         App.state.timetable.periods.forEach(function (pp, i) { if (pp.id === mvPid) mIdx = i; });
         for (var m2 = 1; m2 < (course.span || 1); m2++) {
           var npp = App.state.timetable.periods[mIdx + m2];
-          if (npp && App.state.timetable.cells[App.cellKey(mvDay, npp.id)]) {
+          if (npp && (App.state.timetable.cells[App.cellKey(mvDay, npp.id)] || App.cellHasActiveDdl(mvDay, npp.id))) {
             App.toast('目标位置放不下(会覆盖别的课)'); return;
           }
         }

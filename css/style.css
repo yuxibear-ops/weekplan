@@ -29,7 +29,7 @@ body {
 #app {
   width: 100%;
   max-width: 520px;
-  height: 100dvh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   background: var(--bg);
@@ -58,7 +58,7 @@ body {
 .icon-btn {
   width: 38px; height: 38px;
   border-radius: 12px; border: none;
-  background: var(--card); color: var(--text);
+  background: rgba(255,255,255,0.78); color: var(--text);
   font-size: 20px; line-height: 1;
   display: flex; align-items: center; justify-content: center;
   box-shadow: var(--shadow); cursor: pointer;
@@ -88,7 +88,7 @@ body {
 .tt-grid {
   display: grid;
   grid-template-columns: 52px repeat(var(--cols), minmax(56px, 1fr));
-  grid-auto-rows: minmax(42px, auto);
+  grid-auto-rows: minmax(28px, auto);
   gap: 4px;
 }
 .tt-corner, .tt-day { font-size: 12px; text-align: center; padding: 6px 0; color: var(--muted); }
@@ -100,7 +100,7 @@ body {
 }
 .tt-time small { color: #5b6470; font-size: 10px; }
 .cell {
-  min-height: 42px;
+  min-height: 28px;
   position: relative;
   border-radius: 8px;
   border: 1px dashed var(--border);
@@ -344,7 +344,7 @@ body.has-bg #app { background: transparent; box-shadow: none; }
 /* ===== 本周按钮 / 学期 ===== */
 .pill-btn {
   height: 34px; padding: 0 12px; border-radius: 17px; border: none;
-  background: var(--card); color: var(--text); font-size: 13px; cursor: pointer;
+  background: rgba(255,255,255,0.78); color: var(--text); font-size: 13px; cursor: pointer;
   box-shadow: var(--shadow); font-family: inherit; white-space: nowrap;
   display: inline-flex; align-items: center; justify-content: center;
 }
