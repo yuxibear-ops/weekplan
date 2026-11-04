@@ -75,7 +75,10 @@
 
   App.findTodoPlacement = function (id) {
     var tc = App.state.timetable.todoCells || {};
-    for (var k in tc) { if (tc[k] === id) return k; }
+    for (var k in tc) {
+      var v = tc[k];
+      if (typeof v === 'string' ? v === id : v.id === id) return k;
+    }
     return null;
   };
 
@@ -86,8 +89,8 @@
   };
 
   App.unplaceTodo = function (id) {
-    var tc = App.state.timetable.todoCells || {};
-    for (var k in tc) { if (tc[k] === id) delete tc[k]; }
+    var pk = App.findTodoPlacement(id);
+    if (pk) delete App.state.timetable.todoCells[pk];
     Store.save(App.state);
     App.renderTodos();
     App.renderTimetable();
@@ -138,15 +141,27 @@
   };
 
   App.toggleTodo = function (id) {
-    App.state.todos.forEach(function (t) { if (t.id === id) t.done = !t.done; });
+    var t = App.findTodo(id);
+    if (t) {
+      t.done = !t.done;
+      t.doneAt = t.done ? Date.now() : null;
+    }
+    var pk = App.findTodoPlacement(id);
+    if (pk) {
+      var p = App.state.timetable.todoCells[pk];
+      if (p && typeof p === 'object') {
+        p.done = t ? t.done : !p.done;
+      }
+    }
     Store.save(App.state);
     App.renderTodos();
+    App.renderTimetable();
   };
 
   App.deleteTodo = function (id) {
     App.state.todos = App.state.todos.filter(function (t) { return t.id !== id; });
-    var tc = App.state.timetable.todoCells || {};
-    for (var k in tc) { if (tc[k] === id) delete tc[k]; }
+    var pk = App.findTodoPlacement(id);
+    if (pk) delete App.state.timetable.todoCells[pk];
     Store.save(App.state);
     App.renderTodos();
     App.renderTimetable();

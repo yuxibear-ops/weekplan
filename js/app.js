@@ -5,6 +5,8 @@
 
   App.init = function () {
     App.state = Store.load();
+    App.migrateTodoCells();
+    App.autoCleanDoneTodos();
     App.renderPalette('course-color', App.PALETTE[0]);
     App.renderPalette('note-color', App.PALETTE[2]);
     App.bindEvents();
@@ -53,7 +55,8 @@
           App.toast('这里已经有东西了'); return;
         }
         App.state.timetable.todoCells = App.state.timetable.todoCells || {};
-        App.state.timetable.todoCells[k] = App._placingTodoId;
+        var pt = App.findTodo(App._placingTodoId);
+        App.state.timetable.todoCells[k] = { id: App._placingTodoId, text: pt ? pt.text : '', done: pt ? !!pt.done : false };
         App._placingTodoId = null;
         Store.save(App.state);
         App.renderTimetable();
@@ -62,18 +65,7 @@
         return;
       }
       if (cell.dataset.todo) {
-        var todoId = cell.dataset.todo;
-        if (!App.findTodo(todoId)) {
-          var pk = App.findTodoPlacement(todoId);
-          if (pk) {
-            delete App.state.timetable.todoCells[pk];
-            Store.save(App.state);
-            App.renderTimetable();
-            App.toast('已清除失效的 ddl');
-          }
-          return;
-        }
-        App.toggleTodo(todoId);
+        App.toggleTodo(cell.dataset.todo);
         return;
       }
       App.openCourseEditor(cell.dataset.day, cell.dataset.pid);
@@ -473,6 +465,30 @@
     box.innerHTML = html;
   };
 
+  App.migrateTodoCells = function () {
+    var tc = App.state.timetable.todoCells || {};
+    var changed = false;
+    for (var k in tc) {
+      if (typeof tc[k] === 'string') {
+        var t = App.findTodo(tc[k]);
+        tc[k] = { id: tc[k], text: t ? t.text : '(已删除)', done: t ? !!t.done : false };
+        changed = true;
+      }
+    }
+    if (changed) Store.save(App.state);
+  };
+
+  App.autoCleanDoneTodos = function () {
+    var now = Date.now();
+    var month = 30 * 86400000;
+    var before = App.state.todos.length;
+    App.state.todos = App.state.todos.filter(function (t) {
+      if (t.done && t.doneAt && (now - t.doneAt) > month) return false;
+      return true;
+    });
+    if (App.state.todos.length !== before) Store.save(App.state);
+  };
+
   App.exportJSON = function () {
     var blob = new Blob([Store.exportJSON(App.state)], { type: 'application/json' });
     var url = URL.createObjectURL(blob);
@@ -491,13 +507,22 @@
     reader.onload = function () {
       try {
         var obj = Store.parseJSON(reader.result);
-        App.state = Store.normalize(obj);
+        var tt = null;
+        if (obj.semesters && obj.currentSemesterId && obj.semesters[obj.currentSemesterId]) {
+          tt = obj.semesters[obj.currentSemesterId].timetable;
+        } else if (obj.timetable && typeof obj.timetable === 'object') {
+          tt = obj.timetable;
+        }
+        if (!tt) { App.toast('导入失败:没找到课表数据'); return; }
+        App.state.timetable.periods = (Array.isArray(tt.periods) && tt.periods.length) ? tt.periods : App.state.timetable.periods;
+        App.state.timetable.showWeekend = !!tt.showWeekend;
+        App.state.timetable.cells = (tt.cells && typeof tt.cells === 'object' && !Array.isArray(tt.cells)) ? tt.cells : {};
         Store.save(App.state);
         App.renderSettings();
         App.renderTimetable();
         App.renderTodos();
         App.renderNotes();
-        App.toast('导入成功');
+        App.toast('课表已导入(ddl 和便签保留)');
       } catch (e) {
         App.toast('导入失败:' + e.message);
       }

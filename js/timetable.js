@@ -103,11 +103,21 @@
             + '<span class="drag-handle"></span>'
             + '</button>';
         } else if (tt.todoCells && tt.todoCells[key]) {
-          var todo = App.findTodo(tt.todoCells[key]);
-          var done = todo ? !!todo.done : false;
-          html += '<button class="cell todo-block' + (done ? ' done' : '') + '" style="grid-column:' + col + ';grid-row:' + row + '" data-todo="' + App.esc(tt.todoCells[key]) + '">'
+          var placement = tt.todoCells[key];
+          var done, text, tid;
+          if (typeof placement === 'string') {
+            tid = placement;
+            var todo = App.findTodo(placement);
+            done = todo ? !!todo.done : false;
+            text = todo ? todo.text : '(已删除)';
+          } else {
+            tid = placement.id;
+            done = !!placement.done;
+            text = placement.text || '(已删除)';
+          }
+          html += '<button class="cell todo-block' + (done ? ' done' : '') + '" style="grid-column:' + col + ';grid-row:' + row + '" data-todo="' + App.esc(tid) + '">'
             + '<span class="todo-mark">' + (done ? '☑' : '☐') + '</span>'
-            + '<span class="cname">' + App.esc(todo ? todo.text : '(已删除)') + '</span>'
+            + '<span class="cname">' + App.esc(text) + '</span>'
             + '</button>';
         } else if (!cover[key]) {
           html += '<button class="cell empty" style="grid-column:' + col + ';grid-row:' + row + '" data-day="' + App.esc(d) + '" data-pid="' + App.esc(p.id) + '">＋</button>';

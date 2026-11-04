@@ -129,7 +129,7 @@ body {
 .todo-list { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
 .todo-item {
   display: flex; align-items: center; gap: 10px;
-  background: var(--card); border-radius: var(--radius);
+  background: rgba(255,255,255,0.55); border-radius: var(--radius);
   padding: 12px; box-shadow: var(--shadow);
 }
 .todo-check {
@@ -157,7 +157,7 @@ body {
 }
 .notes-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
 .note-card {
-  background: var(--card); border-radius: var(--radius);
+  background: rgba(255,255,255,0.55); border-radius: var(--radius);
   padding: 12px; box-shadow: var(--shadow);
   border-left: 4px solid var(--accent); cursor: pointer;
   position: relative;
