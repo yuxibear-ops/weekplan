@@ -13,6 +13,7 @@
     App.switchTab('timetable');
     App.renderSettings();
     App.applyBackground();
+    App.applyCellOpacity();
     App.updateSemesterBtn();
   };
 
@@ -48,6 +49,31 @@
       }
       var cell = e.target.closest('.cell');
       if (!cell) return;
+      if (App._movingCourse) {
+        var mc = App._movingCourse;
+        var mvDay = cell.dataset.day, mvPid = cell.dataset.pid;
+        if (!mvDay || !mvPid) { App._movingCourse = null; App.renderTimetable(); return; }
+        var mvKey = App.cellKey(mvDay, mvPid);
+        if (App.state.timetable.cells[mvKey] || (App.state.timetable.todoCells && App.state.timetable.todoCells[mvKey])) {
+          App.toast('这里不是空的'); return;
+        }
+        var srcKey = App.cellKey(mc.day, mc.pid);
+        var course = App.state.timetable.cells[srcKey];
+        if (!course) { App._movingCourse = null; App.renderTimetable(); return; }
+        App.state.timetable.cells[mvKey] = course;
+        delete App.state.timetable.cells[srcKey];
+        var mIdx = -1;
+        App.state.timetable.periods.forEach(function (pp, i) { if (pp.id === mvPid) mIdx = i; });
+        for (var m2 = 1; m2 < (course.span || 1); m2++) {
+          var npp = App.state.timetable.periods[mIdx + m2];
+          if (npp) delete App.state.timetable.cells[App.cellKey(mvDay, npp.id)];
+        }
+        App._movingCourse = null;
+        Store.save(App.state);
+        App.renderTimetable();
+        App.toast('已移动');
+        return;
+      }
       if (App._placingTodoId) {
         var day = cell.dataset.day, pid = cell.dataset.pid;
         var k = App.cellKey(day, pid);
@@ -56,7 +82,9 @@
         }
         App.state.timetable.todoCells = App.state.timetable.todoCells || {};
         var pt = App.findTodo(App._placingTodoId);
-        App.state.timetable.todoCells[k] = { id: App._placingTodoId, text: pt ? pt.text : '', done: pt ? !!pt.done : false };
+        var _dates = App.weekDates();
+        var _dayDate = App.dateStr(_dates[App.DAYS.indexOf(day)]);
+        App.state.timetable.todoCells[k] = { id: App._placingTodoId, text: pt ? pt.text : '', done: pt ? !!pt.done : false, date: _dayDate };
         App._placingTodoId = null;
         Store.save(App.state);
         App.renderTimetable();
@@ -120,6 +148,28 @@
       window.addEventListener('pointerup', onUp);
       window.addEventListener('pointercancel', onUp);
     });
+
+    // 长按课程块进入移动模式
+    var lpTimer = null, lpBlock = null;
+    document.getElementById('view-timetable').addEventListener('pointerdown', function (e) {
+      if (e.target.closest('.drag-handle')) return;
+      var block = e.target.closest('.cell.filled');
+      if (!block) return;
+      lpBlock = block;
+      lpTimer = setTimeout(function () {
+        lpTimer = null;
+        App._movingCourse = { day: block.dataset.day, pid: block.dataset.pid };
+        block.classList.add('moving');
+        App.toast('点一个空格子,把课程移过去');
+      }, 550);
+    });
+    function cancelLongPress() {
+      if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; }
+      if (lpBlock) { lpBlock.classList.remove('moving'); lpBlock = null; }
+    }
+    document.getElementById('view-timetable').addEventListener('pointerup', cancelLongPress);
+    document.getElementById('view-timetable').addEventListener('pointermove', cancelLongPress);
+    document.getElementById('view-timetable').addEventListener('pointerleave', cancelLongPress);
 
     // 待办(委托)
     document.getElementById('view-todos').addEventListener('click', function (e) {
@@ -207,6 +257,10 @@
     document.getElementById('btn-bg-clear').addEventListener('click', App.clearBackground);
     document.getElementById('bg-opacity').addEventListener('input', function () {
       App.setBackgroundOpacity(parseInt(this.value, 10));
+    });
+    document.getElementById('cell-opacity').addEventListener('input', function () {
+      App.setCellOpacity(parseInt(this.value, 10));
+      document.getElementById('cell-opacity-val').textContent = this.value + '%';
     });
 
     // 设置:自定义
@@ -313,7 +367,7 @@
 
   App.switchTab = function (tab) {
     App.currentTab = tab;
-    if (tab !== 'timetable') App._placingTodoId = null;
+    if (tab !== 'timetable') { App._placingTodoId = null; App._movingCourse = null; }
     var tabs = document.querySelectorAll('.tab');
     for (var i = 0; i < tabs.length; i++) tabs[i].classList.toggle('active', tabs[i].dataset.tab === tab);
     var views = document.querySelectorAll('.view');
@@ -343,6 +397,9 @@
     var op = Math.round((App.state.backgroundOpacity || 1) * 100);
     document.getElementById('bg-opacity').value = op;
     document.getElementById('bg-opacity-val').textContent = op + '%';
+    var cop = Math.round((App.state.cellOpacity || 0.55) * 100);
+    document.getElementById('cell-opacity').value = cop;
+    document.getElementById('cell-opacity-val').textContent = cop + '%';
     document.getElementById('app-name').value = App.state.appName || 'WEEK♕';
     document.getElementById('semester-start').value = App.state.semesterStart || '2026-09-07';
     document.getElementById('place-emoji').value = App.state.placeEmoji || '⏱';
@@ -361,6 +418,18 @@
     } else {
       layer.style.display = 'none';
     }
+  };
+
+  App.applyCellOpacity = function () {
+    var a = (typeof App.state.cellOpacity === 'number') ? App.state.cellOpacity : 0.55;
+    document.documentElement.style.setProperty('--cell-alpha', a);
+  };
+
+  App.setCellOpacity = function (val) {
+    App.state.cellOpacity = val / 100;
+    Store.save(App.state);
+    App.applyCellOpacity();
+    App.renderTimetable();
   };
 
   App.setBackgroundImage = function (file) {

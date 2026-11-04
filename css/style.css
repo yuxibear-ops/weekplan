@@ -101,7 +101,7 @@ body {
   position: relative;
   border-radius: 8px;
   border: 1px dashed var(--border);
-  background: rgba(255,255,255,0.55);
+  background: rgba(255,255,255,var(--cell-alpha, 0.55));
   font-size: 11px; color: var(--text);
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   text-align: center; padding: 4px 2px;
@@ -129,7 +129,7 @@ body {
 .todo-list { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
 .todo-item {
   display: flex; align-items: center; gap: 10px;
-  background: rgba(255,255,255,0.55); border-radius: var(--radius);
+  background: rgba(255,255,255,var(--cell-alpha, 0.55)); border-radius: var(--radius);
   padding: 12px; box-shadow: var(--shadow);
 }
 .todo-check {
@@ -157,7 +157,7 @@ body {
 }
 .notes-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
 .note-card {
-  background: rgba(255,255,255,0.55); border-radius: var(--radius);
+  background: rgba(255,255,255,var(--cell-alpha, 0.55)); border-radius: var(--radius);
   padding: 12px; box-shadow: var(--shadow);
   border-left: 4px solid var(--accent); cursor: pointer;
   position: relative;
@@ -289,7 +289,7 @@ input.switch:checked::after { left: 25px; }
 /* ===== 课表里的 ddl ===== */
 .cell.todo-block {
   border: 1px dashed var(--accent-deep);
-  background: rgba(255,255,255,0.55);
+  background: rgba(255,255,255,var(--cell-alpha, 0.55));
   color: var(--text);
   cursor: pointer;
 }
@@ -353,3 +353,4 @@ body.has-bg #app { background: transparent; box-shadow: none; }
 .semester-item.current { border-color: var(--accent); background: rgba(242,134,149,.08); }
 .semester-name { font-size: 14px; font-weight: 600; color: var(--text); }
 .semester-start { font-size: 11px; color: var(--muted); }
+.cell.filled.moving { outline: 2px solid var(--accent-deep); transform: scale(1.04); }
