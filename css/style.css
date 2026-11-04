@@ -343,6 +343,7 @@ body.has-bg #app { background: transparent; box-shadow: none; }
   height: 34px; padding: 0 12px; border-radius: 17px; border: none;
   background: var(--card); color: var(--text); font-size: 13px; cursor: pointer;
   box-shadow: var(--shadow); font-family: inherit; white-space: nowrap;
+  display: inline-flex; align-items: center; justify-content: center;
 }
 .semester-item {
   display: flex; align-items: center; justify-content: space-between;
