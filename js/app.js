@@ -5,6 +5,8 @@
 
   App.init = function () {
     App.state = Store.load();
+    App._undoStack = [];
+    App._redoStack = [];
     App.migrateTodoCells();
     App.autoCleanDoneTodos();
     App.renderPalette('course-color', App.PALETTE[0]);
@@ -15,6 +17,7 @@
     App.applyBackground();
     App.applyCellOpacity();
     App.updateSemesterBtn();
+    App.updateTabLabels();
     App.updateUndoBtn();
   };
 
@@ -86,7 +89,7 @@
       if (App._placingTodoId) {
         var day = cell.dataset.day, pid = cell.dataset.pid;
         var k = App.cellKey(day, pid);
-        if (!day || App.isCourseCell(day, pid) || (App.state.timetable.todoCells && App.state.timetable.todoCells[k])) {
+        if (!day || App.isCourseCell(day, pid) || App.cellHasActiveDdl(day, pid)) {
           App.toast('这里已经有东西了'); return;
         }
         App.captureUndo();
@@ -219,8 +222,6 @@
       if (e.target.id === 'note-search') {
         App.noteQuery = e.target.value;
         App.renderNotes();
-        var el = document.getElementById('note-search');
-        if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
       }
     });
 
@@ -278,9 +279,26 @@
     document.getElementById('app-name').addEventListener('input', function () {
       App.state.appName = this.value;
       Store.save(App.state);
+      App.updateTabLabels();
       if (App.currentTab === 'timetable') {
         document.getElementById('view-title').textContent = this.value || 'WEEK♕';
       }
+    });
+    document.getElementById('todos-name').addEventListener('input', function () {
+      App.state.todosName = this.value;
+      Store.save(App.state);
+      App.updateTabLabels();
+      if (App.currentTab === 'todos') document.getElementById('view-title').textContent = this.value || 'ddl';
+    });
+    document.getElementById('notes-name').addEventListener('input', function () {
+      App.state.notesName = this.value;
+      Store.save(App.state);
+      App.updateTabLabels();
+      if (App.currentTab === 'notes') document.getElementById('view-title').textContent = this.value || '便签';
+    });
+    document.getElementById('auto-clean').addEventListener('change', function () {
+      App.state.autoCleanDone = this.checked;
+      Store.save(App.state);
     });
     document.getElementById('semester-start').addEventListener('change', function () {
       App.state.semesterStart = this.value;
@@ -301,6 +319,7 @@
     // 本周 + 学期
     document.getElementById('btn-this-week').addEventListener('click', App.goThisWeek);
     document.getElementById('btn-undo').addEventListener('click', App.undo);
+    document.getElementById('btn-redo').addEventListener('click', App.redo);
     document.getElementById('btn-semester').addEventListener('click', function () {
       App.renderSemesters();
       App.openModal('modal-semester');
@@ -384,7 +403,7 @@
     for (var i = 0; i < tabs.length; i++) tabs[i].classList.toggle('active', tabs[i].dataset.tab === tab);
     var views = document.querySelectorAll('.view');
     for (var j = 0; j < views.length; j++) views[j].classList.toggle('active', views[j].id === 'view-' + tab);
-    var titles = { timetable: (App.state.appName || 'WEEK♕'), todos: 'ddl', notes: '便签' };
+    var titles = { timetable: (App.state.appName || 'WEEK♕'), todos: (App.state.todosName || 'ddl'), notes: (App.state.notesName || '便签') };
     document.getElementById('view-title').textContent = titles[tab];
     document.getElementById('btn-add').style.display = (tab === 'timetable') ? 'none' : 'flex';
     document.getElementById('btn-this-week').style.display = (tab === 'timetable') ? 'flex' : 'none';
@@ -413,9 +432,12 @@
     document.getElementById('cell-opacity').value = cop;
     document.getElementById('cell-opacity-val').textContent = cop + '%';
     document.getElementById('app-name').value = App.state.appName || 'WEEK♕';
+    document.getElementById('todos-name').value = App.state.todosName || 'ddl';
+    document.getElementById('notes-name').value = App.state.notesName || '便签';
     document.getElementById('semester-start').value = App.state.semesterStart || '2026-09-07';
     document.getElementById('place-emoji').value = App.state.placeEmoji || '⏱';
     document.getElementById('unplace-emoji').value = App.state.unplaceEmoji || '↩';
+    document.getElementById('auto-clean').checked = !!App.state.autoCleanDone;
   };
 
   App.applyBackground = function () {
@@ -532,32 +554,68 @@
     App.toast('已创建学期 ' + name + ',点它切换');
   };
 
-  App.captureUndo = function () {
-    App._undoSnapshot = {
+  App.snapshot = function () {
+    return {
       cells: JSON.parse(JSON.stringify(App.state.timetable.cells)),
       todos: JSON.parse(JSON.stringify(App.state.todos)),
       notes: JSON.parse(JSON.stringify(App.state.notes))
     };
+  };
+
+  App.captureUndo = function () {
+    App._undoStack.push(App.snapshot());
+    if (App._undoStack.length > 50) App._undoStack.shift();
+    App._redoStack = [];
     App.updateUndoBtn();
   };
 
-  App.undo = function () {
-    if (!App._undoSnapshot) { App.toast('没有可撤回的操作'); return; }
-    App.state.timetable.cells = App._undoSnapshot.cells;
-    App.state.todos = App._undoSnapshot.todos;
-    App.state.notes = App._undoSnapshot.notes;
-    App._undoSnapshot = null;
-    Store.save(App.state);
+  App.restoreSnapshot = function (snap) {
+    App.state.timetable.cells = snap.cells;
+    App.state.todos = snap.todos;
+    App.state.notes = snap.notes;
+  };
+
+  App.renderAll = function () {
     App.renderTimetable();
     App.renderTodos();
     App.renderNotes();
+  };
+
+  App.undo = function () {
+    if (!App._undoStack.length) { App.toast('没有可撤回的操作'); return; }
+    App._redoStack.push(App.snapshot());
+    App.restoreSnapshot(App._undoStack.pop());
+    Store.save(App.state);
+    App.renderAll();
     App.updateUndoBtn();
     App.toast('已撤回');
   };
 
+  App.redo = function () {
+    if (!App._redoStack.length) { App.toast('没有可恢复的操作'); return; }
+    App._undoStack.push(App.snapshot());
+    App.restoreSnapshot(App._redoStack.pop());
+    Store.save(App.state);
+    App.renderAll();
+    App.updateUndoBtn();
+    App.toast('已恢复');
+  };
+
   App.updateUndoBtn = function () {
-    var btn = document.getElementById('btn-undo');
-    if (btn) btn.style.opacity = App._undoSnapshot ? '1' : '0.4';
+    var ub = document.getElementById('btn-undo');
+    var rb = document.getElementById('btn-redo');
+    if (ub) ub.style.opacity = App._undoStack.length ? '1' : '0.4';
+    if (rb) rb.style.opacity = App._redoStack.length ? '1' : '0.4';
+  };
+
+  App.updateTabLabels = function () {
+    var tabs = document.querySelectorAll('.tab');
+    for (var i = 0; i < tabs.length; i++) {
+      var t = tabs[i].dataset.tab;
+      if (t === 'timetable') tabs[i].textContent = App.state.appName || 'WEEK♕';
+      else if (t === 'todos') tabs[i].textContent = App.state.todosName || 'ddl';
+      else if (t === 'notes') tabs[i].textContent = App.state.notesName || '便签';
+    }
   };
 
   App.renderSemesters = function () {
@@ -588,6 +646,7 @@
   };
 
   App.autoCleanDoneTodos = function () {
+    if (!App.state.autoCleanDone) return;
     var now = Date.now();
     var month = 30 * 86400000;
     var before = App.state.todos.length;

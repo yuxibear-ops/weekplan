@@ -20,9 +20,10 @@
   }
 
   App.renderNotes = function () {
-    var view = document.getElementById('view-notes');
+    var box = document.getElementById('notes-list');
+    if (!box) return;
     var list = sortedNotes();
-    var html = '<input class="note-search" id="note-search" type="search" placeholder="搜索便签..." value="' + App.esc(App.noteQuery) + '">';
+    var html = '';
     if (!list.length) {
       html += '<div class="empty">还没有便签,点右上角 ＋ 添加</div>';
     } else {
@@ -43,7 +44,7 @@
       });
       html += '</div>';
     }
-    view.innerHTML = html;
+    box.innerHTML = html;
   };
 
   App.openNoteEditor = function (id) {

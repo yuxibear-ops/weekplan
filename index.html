@@ -20,7 +20,10 @@
   <div id="app">
     <header class="app-header">
       <div class="header-top">
-        <button id="btn-undo" class="pill-btn" title="撤回">↩</button>
+        <div class="header-left">
+          <button id="btn-undo" class="pill-btn" title="撤回">↩</button>
+          <button id="btn-redo" class="pill-btn" title="恢复">↻</button>
+        </div>
         <h1 id="view-title">WEEK♕</h1>
         <div class="header-actions">
           <button id="btn-add" class="icon-btn" aria-label="新建" style="display:none">＋</button>
@@ -36,7 +39,10 @@
     <main id="views">
       <section id="view-timetable" class="view active"></section>
       <section id="view-todos" class="view"></section>
-      <section id="view-notes" class="view"></section>
+      <section id="view-notes" class="view">
+        <input class="note-search" id="note-search" type="search" placeholder="搜索便签...">
+        <div id="notes-list"></div>
+      </section>
     </main>
 
     <nav class="tabbar">
@@ -114,6 +120,10 @@
         <label for="show-weekend">显示周六周日</label>
         <input type="checkbox" id="show-weekend" class="switch">
       </div>
+      <div class="field row">
+        <label for="auto-clean">自动清理已完成 ddl</label>
+        <input type="checkbox" id="auto-clean" class="switch">
+      </div>
       <div class="field">
         <label>背景</label>
         <div class="modal-actions">
@@ -135,6 +145,11 @@
         <label>自定义</label>
         <div class="mini-label">应用名称</div>
         <input id="app-name" type="text" placeholder="WEEK♕">
+        <div class="mini-label">待办名称 / 便签名称</div>
+        <div class="emoji-row">
+          <input id="todos-name" type="text" placeholder="ddl">
+          <input id="notes-name" type="text" placeholder="便签">
+        </div>
         <div class="mini-label">学期起始(第1周周一)</div>
         <input id="semester-start" type="date">
         <div class="mini-label">放入课表 / 移出课表 图标</div>

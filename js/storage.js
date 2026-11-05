@@ -48,8 +48,11 @@
       background: '',
       backgroundOpacity: 1,
       cellOpacity: 0.55,
+      autoCleanDone: true,
       currentWeek: 1,
       appName: 'WEEK♕',
+      todosName: 'ddl',
+      notesName: '便签',
       placeEmoji: '⏱',
       unplaceEmoji: '↩'
     };
@@ -98,8 +101,11 @@
       background: (typeof obj.background === 'string') ? obj.background : '',
       backgroundOpacity: (typeof obj.backgroundOpacity === 'number') ? obj.backgroundOpacity : 1,
       cellOpacity: (typeof obj.cellOpacity === 'number') ? obj.cellOpacity : 0.55,
+      autoCleanDone: (typeof obj.autoCleanDone === 'boolean') ? obj.autoCleanDone : true,
       currentWeek: (typeof obj.currentWeek === 'number' && obj.currentWeek >= 1) ? obj.currentWeek : 1,
       appName: (typeof obj.appName === 'string' && obj.appName) ? obj.appName : 'WEEK♕',
+      todosName: (typeof obj.todosName === 'string' && obj.todosName) ? obj.todosName : 'ddl',
+      notesName: (typeof obj.notesName === 'string' && obj.notesName) ? obj.notesName : '便签',
       placeEmoji: (typeof obj.placeEmoji === 'string' && obj.placeEmoji) ? obj.placeEmoji : '⏱',
       unplaceEmoji: (typeof obj.unplaceEmoji === 'string' && obj.unplaceEmoji) ? obj.unplaceEmoji : '↩'
     };
