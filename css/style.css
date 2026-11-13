@@ -357,3 +357,4 @@ body.has-bg #app { background: transparent; box-shadow: none; }
 .semester-name { font-size: 14px; font-weight: 600; color: var(--text); }
 .semester-start { font-size: 11px; color: var(--muted); }
 .cell.filled.moving { outline: 2px solid var(--accent-deep); transform: scale(1.04); }
+.cnote { position: absolute; top: 2px; right: 3px; font-size: 9px; line-height: 1; }

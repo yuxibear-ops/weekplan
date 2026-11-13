@@ -18,7 +18,7 @@
       App.DAYS.forEach(function (d) {
         var key = App.cellKey(d, p.id);
         var cell = tt.cells[key];
-        if (cell && cell.span > 1) {
+        if (cell && cell.span > 1 && App.courseVisible(cell)) {
           for (var k = 1; k < cell.span; k++) {
             var next = tt.periods[idx + k];
             if (next) cover[App.cellKey(d, next.id)] = key;
@@ -32,13 +32,13 @@
   App.isCourseCell = function (day, periodId) {
     var tt = App.state.timetable;
     var key = App.cellKey(day, periodId);
-    if (tt.cells[key]) return true;
+    if (tt.cells[key] && App.courseVisible(tt.cells[key])) return true;
     var idx = -1;
     tt.periods.forEach(function (p, i) { if (p.id === periodId) idx = i; });
     if (idx < 0) return false;
     for (var k = idx - 1; k >= 0; k--) {
       var c = tt.cells[App.cellKey(day, tt.periods[k].id)];
-      if (c && c.span > 1 && (idx - k) < c.span) return true;
+      if (c && c.span > 1 && (idx - k) < c.span && App.courseVisible(c)) return true;
     }
     return false;
   };
@@ -53,6 +53,14 @@
     return p.date === dd;
   };
 
+  App.courseVisible = function (cell) {
+    if (!cell) return false;
+    var w = App.state.currentWeek || 1;
+    if (cell.endWeek && w > cell.endWeek) return false;
+    if (cell.skipWeeks && cell.skipWeeks.indexOf(w) >= 0) return false;
+    return true;
+  };
+
   App.maxSpanFor = function (day, periodId) {
     var tt = App.state.timetable;
     var idx = -1;
@@ -60,7 +68,8 @@
     if (idx < 0) return 1;
     var max = 1;
     for (var k = idx + 1; k < tt.periods.length; k++) {
-      if (tt.cells[App.cellKey(day, tt.periods[k].id)] || App.cellHasActiveDdl(day, tt.periods[k].id)) break;
+      var c = tt.cells[App.cellKey(day, tt.periods[k].id)];
+      if ((c && App.courseVisible(c)) || App.cellHasActiveDdl(day, tt.periods[k].id)) break;
       max++;
     }
     return max;
@@ -107,12 +116,13 @@
         var placement = (tt.todoCells && tt.todoCells[key]) ? tt.todoCells[key] : null;
         var dayDate = App.dateStr(dates[App.DAYS.indexOf(d)]);
         var showPlacement = placement && (typeof placement === 'string' ? true : (!placement.date || placement.date === dayDate));
-        if (cell) {
+        if (cell && App.courseVisible(cell)) {
           var span = Math.max(1, cell.span || 1);
           var isMoving = App._movingCourse && App._movingCourse.day === d && App._movingCourse.pid === p.id;
           html += '<button class="cell filled' + (isMoving ? ' moving' : '') + '" style="background:' + App.hexToRgba(cell.color || App.PALETTE[0], (typeof App.state.cellOpacity === 'number' ? App.state.cellOpacity : 0.55)) + ';grid-column:' + col + ';grid-row:' + row + ' / span ' + span + '" data-day="' + App.esc(d) + '" data-pid="' + App.esc(p.id) + '">'
             + '<span class="cname">' + App.esc(cell.name) + '</span>'
             + (cell.location ? '<span class="cloc">' + App.esc(cell.location) + '</span>' : '')
+            + (cell.note ? '<span class="cnote">📝</span>' : '')
             + '<span class="drag-handle"></span>'
             + '</button>';
         } else if (showPlacement) {
@@ -151,8 +161,11 @@
     document.getElementById('course-location').value = cell ? (cell.location || '') : '';
     document.getElementById('course-teacher').value = cell ? (cell.teacher || '') : '';
     document.getElementById('course-span').value = cell ? (cell.span || 1) : 1;
+    document.getElementById('course-endweek').value = cell ? (cell.endWeek || '') : '';
+    document.getElementById('course-note').value = cell ? (cell.note || '') : '';
     App.renderPalette('course-color', cell ? cell.color : App.PALETTE[0]);
     document.getElementById('course-delete').style.display = cell ? 'block' : 'none';
+    document.getElementById('course-delete-week').style.display = cell ? 'block' : 'none';
     App.openModal('modal-course');
   };
 
@@ -161,6 +174,7 @@
     var tt = App.state.timetable;
     var day = App._courseDay, pid = App._coursePid;
     var key = App.cellKey(day, pid);
+    var existing = tt.cells[key];
 
     var name = document.getElementById('course-name').value.trim();
     var location = document.getElementById('course-location').value.trim();
@@ -169,9 +183,11 @@
     var span = parseInt(document.getElementById('course-span').value, 10) || 1;
     if (span < 1) span = 1;
     if (span > tt.periods.length) span = tt.periods.length;
+    var endWeek = parseInt(document.getElementById('course-endweek').value, 10) || null;
+    var note = document.getElementById('course-note').value.trim();
 
     if (!name) {
-      if (tt.cells[key]) { delete tt.cells[key]; Store.save(App.state); App.renderTimetable(); App.toast('已删除'); }
+      if (existing) { delete tt.cells[key]; Store.save(App.state); App.renderTimetable(); App.toast('已删除'); }
       App.closeModal('modal-course');
       return;
     }
@@ -183,7 +199,11 @@
       if (np) delete tt.cells[App.cellKey(day, np.id)];
     }
 
-    tt.cells[key] = { name: name, location: location, teacher: teacher, color: color, span: span };
+    tt.cells[key] = {
+      name: name, location: location, teacher: teacher, color: color, span: span,
+      endWeek: endWeek, note: note,
+      skipWeeks: (existing && existing.skipWeeks) ? existing.skipWeeks : []
+    };
     Store.save(App.state);
     App.renderTimetable();
     App.closeModal('modal-course');
@@ -198,5 +218,20 @@
     App.renderTimetable();
     App.closeModal('modal-course');
     App.toast('已删除');
+  };
+
+  App.deleteCourseWeek = function () {
+    App.captureUndo();
+    var tt = App.state.timetable;
+    var cell = tt.cells[App.cellKey(App._courseDay, App._coursePid)];
+    if (!cell) { App.closeModal('modal-course'); return; }
+    cell.skipWeeks = cell.skipWeeks || [];
+    if (cell.skipWeeks.indexOf(App.state.currentWeek || 1) < 0) {
+      cell.skipWeeks.push(App.state.currentWeek || 1);
+    }
+    Store.save(App.state);
+    App.renderTimetable();
+    App.closeModal('modal-course');
+    App.toast('已删除本周的这门课');
   };
 })();

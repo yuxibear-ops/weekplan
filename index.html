@@ -62,9 +62,14 @@
       <div class="field"><label>老师</label><input id="course-teacher" type="text" placeholder="选填"></div>
       <div class="field"><label>颜色</label><div class="swatches" id="course-color"></div></div>
       <div class="field"><label>连上节数</label><input id="course-span" type="number" min="1" max="12" value="1"></div>
+      <div class="field"><label>结束周(留空=整学期)</label><input id="course-endweek" type="number" min="1" max="30" placeholder="如:16"></div>
+      <div class="field"><label>备注</label><textarea id="course-note" rows="2" placeholder="选填"></textarea></div>
       <div class="modal-actions">
         <button class="btn btn-primary" id="course-save">保存</button>
-        <button class="btn btn-ghost" id="course-delete" style="display:none">删除</button>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="course-delete-week" style="display:none">仅删本周</button>
+        <button class="btn btn-ghost" id="course-delete" style="display:none">移除整门课</button>
       </div>
     </div>
   </div>

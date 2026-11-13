@@ -230,6 +230,9 @@
     document.getElementById('course-delete').addEventListener('click', function () {
       App.confirm('删除这门课?', App.deleteCourse);
     });
+    document.getElementById('course-delete-week').addEventListener('click', function () {
+      App.confirm('只删除本周的这门课?', App.deleteCourseWeek);
+    });
 
     // 待办保存/删除
     document.getElementById('todo-save').addEventListener('click', App.saveTodo);
