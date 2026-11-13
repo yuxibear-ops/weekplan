@@ -97,7 +97,7 @@
         var pt = App.findTodo(App._placingTodoId);
         var _dates = App.weekDates();
         var _dayDate = App.dateStr(_dates[App.DAYS.indexOf(day)]);
-        App.state.timetable.todoCells[k] = { id: App._placingTodoId, text: pt ? pt.text : '', done: pt ? !!pt.done : false, date: _dayDate };
+        App.state.timetable.todoCells[_dayDate + '|' + pid] = { id: App._placingTodoId, text: pt ? pt.text : '', done: pt ? !!pt.done : false, date: _dayDate };
         App._placingTodoId = null;
         Store.save(App.state);
         App.renderTimetable();
@@ -639,10 +639,17 @@
     var tc = App.state.timetable.todoCells || {};
     var changed = false;
     for (var k in tc) {
-      if (typeof tc[k] === 'string') {
-        var t = App.findTodo(tc[k]);
-        tc[k] = { id: tc[k], text: t ? t.text : '(已删除)', done: t ? !!t.done : false };
+      var v = tc[k];
+      if (typeof v === 'string') {
+        var t = App.findTodo(v);
+        v = { id: v, text: t ? t.text : '(已删除)', done: t ? !!t.done : false };
+        tc[k] = v;
         changed = true;
+      }
+      var parts = k.split('|');
+      if (parts.length === 2 && App.DAYS.indexOf(parts[0]) >= 0 && v.date) {
+        var nk = v.date + '|' + parts[1];
+        if (!tc[nk]) { tc[nk] = v; delete tc[k]; changed = true; }
       }
     }
     if (changed) Store.save(App.state);

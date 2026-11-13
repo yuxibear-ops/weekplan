@@ -45,12 +45,8 @@
 
   App.cellHasActiveDdl = function (day, periodId) {
     var tc = App.state.timetable.todoCells || {};
-    var p = tc[App.cellKey(day, periodId)];
-    if (!p) return false;
-    if (typeof p === 'string') return true;
-    if (!p.date) return true;
     var dd = App.dateStr(App.weekDates()[App.DAYS.indexOf(day)]);
-    return p.date === dd;
+    return !!tc[dd + '|' + periodId];
   };
 
   App.courseVisible = function (cell) {
@@ -113,9 +109,9 @@
         var col = di + 2;
         var key = App.cellKey(d, p.id);
         var cell = tt.cells[key];
-        var placement = (tt.todoCells && tt.todoCells[key]) ? tt.todoCells[key] : null;
         var dayDate = App.dateStr(dates[App.DAYS.indexOf(d)]);
-        var showPlacement = placement && (typeof placement === 'string' ? true : (!placement.date || placement.date === dayDate));
+        var placement = (tt.todoCells && tt.todoCells[dayDate + '|' + p.id]) || null;
+        var showPlacement = !!placement;
         if (cell && App.courseVisible(cell)) {
           var span = Math.max(1, cell.span || 1);
           var isMoving = App._movingCourse && App._movingCourse.day === d && App._movingCourse.pid === p.id;
